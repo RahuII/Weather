@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:weather/screens/location_screen.dart';
 import 'package:weather/services/location.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:weather/services/networking.dart';
 
 const apiKey = '70496a42e3e5bab089b7ad21f7bcf582';
 
@@ -16,43 +17,35 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   void initState() {
     super.initState();
-    getLocation();
+    getLocationData();
     print('this line of code is triggered');
   }
 
-  void getLocation() async {
+  void getLocationData() async {
     Location location = Location();
     await location.getCurrentLocation();
-    latitude = location.latitude;
-    longitude = location.longitude;
-    getData();
-  }
 
-  void getData() async {
-    Uri url = Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&appid=$apiKey');
-    http.Response response = await http.get(url);
-    if (response.statusCode == 200) {
-      String data = response.body;
-      print(data);
+    NetworkHelper networkHelper = NetworkHelper(
+        'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=$apiKey&units=metric');
 
-      var decodedData = jsonDecode(data);
+    var weatherData = await networkHelper.getData();
 
-      double temperature = decodedData['main']['temp'];
-      print(temperature);
-
-      int condition = decodedData['weather'][0]['id'];
-      print(condition);
-
-      String cityName = decodedData['name'];
-      print(cityName);
-    } else {
-      print(response.statusCode);
-    }
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return LocationScreen(
+        locationWeather: weatherData,
+      );
+    }));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body: Center(
+        child: SpinKitDoubleBounce(
+          color: Colors.white,
+          size: 100,
+        ),
+      ),
+    );
   }
 }
